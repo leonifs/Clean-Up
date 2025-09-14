@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Clean Up</title>
+  <!-- Leaflet CSS untuk peta embedded -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    :root{--dark-blue:#0b2d82;--light-blue:#4daaf5}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:"Times New Roman", Times, serif;
+      background:linear-gradient(to bottom,var(--dark-blue) 0%, var(--light-blue) 100%);
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      color:#fff;
+      -webkit-font-smoothing:antialiased;
+      max-width:360px;
+      margin:0 auto;
+      min-height:100%;
+      display:flex;
+      flex-direction:column;
+      box-sizing:border-box;
+    }
+
+    header{padding:18px 12px 8px;text-align:center}
+    header h1{margin:0;font-size:22px}
+    header p{margin:6px 0 0;font-size:12px}
+
+    .search-box{padding:10px 12px}
+    .search-box input{width:100%;padding:10px 12px;border-radius:12px;border:0;font-size:13px;box-sizing:border-box}
+
+    .menu{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:8px 12px}
+    .menu button{background:linear-gradient(180deg,#fff,#eaf5ff);border:0;border-radius:12px;padding:14px;font-size:13px;color:#000;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.15);font-family:"Times New Roman", Times, serif;text-align:center}
+    .menu button span{display:block;font-size:26px;margin-bottom:6px}
+
+    .promo{background:var(--dark-blue);border-radius:12px;padding:12px;margin:12px;color:#fff;text-align:center}
+    .promo strong{display:block}
+
+    .card{background:#fff;color:#000;border-radius:12px;padding:12px;margin:12px;box-shadow:0 2px 6px rgba(0,0,0,0.15);position:relative}
+    .card h3{margin:0;font-size:16px}
+    .card p{margin:6px 0 0;color:#555;font-size:13px}
+    .stars{color:#d4af37;margin-top:8px}
+    .order-btn{position:absolute;right:12px;bottom:12px;background:var(--dark-blue);color:#fff;border:0;border-radius:18px;padding:6px 12px;cursor:pointer}
+
+    /* pages */
+    .page{display:none;flex:1;flex-direction:column}
+    .page.active{display:block}
+    .page { padding-bottom: 80px}
+
+    /* price list page */
+    .price-list-panel{background:#fff;color:#000;border-radius:12px;padding:12px;margin:12px;box-shadow:0 2px 6px rgba(0,0,0,0.12)}
+    .price-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #eee}
+    .price-left{display:flex;flex-direction:column}
+    .price-name{font-size:14px}
+    .price-cost{font-size:13px;color:#666}
+    .price-actions{display:flex;gap:8px;align-items:center}
+    .choose-btn{background:transparent;border:0;color:var(--dark-blue);font-weight:600;cursor:pointer}
+    .add-btn{background:var(--dark-blue);border:0;color:#fff;border-radius:50%;width:30px;height:30px;cursor:pointer}
+
+    /* cart popup (small, floating, not touching bottom) */
+    .cart-popup{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:#fff;color:#000;border-radius:12px;padding:10px;width:calc(100% - 48px);max-width:320px;box-shadow:0 6px 18px rgba(0,0,0,0.25);display:none}
+    .cart-header{font-size:14px;text-align:center;margin-bottom:8px}
+    .cart-list{max-height:160px;overflow:auto;margin:0;padding:0;list-style:none}
+    .cart-item{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #eee;font-size:13px}
+    .cart-item button{background:#dc3545;border:0;color:#fff;border-radius:50%;width:22px;height:22px;cursor:pointer}
+    .checkout-btn{display:block;width:100%;margin-top:8px;background:var(--dark-blue);color:#fff;border:0;padding:8px;border-radius:8px;cursor:pointer}
+
+    /* order page */
+    .order-panel{background:#fff;color:#000;border-radius:12px;padding:12px;margin:12px;box-shadow:0 2px 6px rgba(0,0,0,0.12)}
+    .address-row{display:flex;gap:8px;align-items:center}
+    .address-input{flex:1;padding:10px;border-radius:10px;border:1px solid #ddd}
+    .small-btn{background:var(--dark-blue);color:#fff;border:0;padding:8px 10px;border-radius:10px;cursor:pointer}
+    .order-items{margin-top:10px}
+    .order-item{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee}
+    .summary-row{display:flex;justify-content:space-between;padding:8px 0;font-weight:600}
+    .promo-row{display:flex;gap:8px;margin-top:8px}
+    .promo-input{flex:1;padding:8px;border-radius:8px;border:1px solid #ddd}
+    .pesan-btn{display:block;width:100%;margin-top:10px;background:var(--dark-blue);color:#fff;border:0;padding:12px;border-radius:8px;cursor:pointer;font-size:16px}
+
+    /* embedded order map (hidden by default) */
+    #orderMap{height:240px;margin-top:8px;border-radius:12px;overflow:hidden;display:none;background:#f6f6f6}
+    #fromAddressContainer{display:none;margin-top:8px}
+    /* plain text style for From Alamat (no frame) */
+    .from-address-text{margin-top:6px;font-size:14px;color:#333;line-height:1.35}
+
+    @media (max-width:360px){body{max-width:100%}}
+      /* compact order summary styling (requested) */
+    .order-panel .summary-row{padding:4px 0;margin:2px 0;font-size:13px}
+    .order-panel .summary-row div{font-size:13px}
+    #orderSubtotal,#orderShipping,#orderDiscount,#orderTotal{font-size:13px !important}
+    #orderTotal{font-size:14px !important}
+
+      /* shrink order items & shipping labels (rincian pesanan -> ongkos kirim) */
+    /* Apply only to the order items list and the shipping section that appears before promo */
+    #orderItems, #orderItems .order-item, .orderItems, .order-panel .order-item {
+      font-size:13px !important;
+      padding:4px 0 !important;
+      margin:0 !important;
+      line-height:1.25 !important;
+    }
+
+    /* Make the "Rincian Pesanan" header slightly smaller */
+    .order-panel > div > strong{
+      font-size:13px !important;
+      font-weight:600;
+    }
+
+    /* Target labels and radio labels that live in the sibling divs after #orderItems (this targets the Ongkos Kirim block)
+       without affecting the promo-row which comes after. */
+    #orderItems ~ div label,
+    #orderItems ~ div label strong,
+    #orderItems ~ div div label {
+      font-size:13px !important;
+      line-height:1.25 !important;
+      margin:2px 0 !important;
+    }
+
+    /* Ensure promo-row keeps its intended size (do not shrink promo UI) */
+    .order-panel .promo-row, .order-panel .promo-row * {
+      font-size:14px !important;
+    }
+
+      /* payment row */
+    .payment-row{margin-top:8px}
+    #paymentMethod{width:100%;padding:8px;border-radius:8px;border:1px solid #ddd}
+
+      /* success page styles */
+    #successPage .order-panel{background:#fff;color:#000;border-radius:12px;padding:12px;margin:12px;box-shadow:0 2px 6px rgba(0,0,0,0.12)}
+    #successPage .contact-card{background:transparent;padding:6px 0;border-bottom:1px solid #eee}
+    #successPage .contact-row{display:flex;justify-content:space-between;align-items:center}
+    #successPage .contact-name{font-weight:600;color:#000}
+    #successPage .contact-actions{display:flex;gap:8px}
+    #successPage .contact-actions .small-btn{padding:6px 10px;border-radius:8px;background:var(--dark-blue);color:#fff;border:0;cursor:pointer}
+
+      /* disabled state for Pesan Sekarang */
+    .pesan-btn[disabled]{opacity:0.6;cursor:not-allowed}
+
+    /* success page QR placeholder */
+    #successQR{display:none;text-align:center;margin-top:12px}
+
+      /* footer navigation (home only) */
+    .footer-nav{
+  position: fixed;
+  bottom: 0;                /* langsung nempel ke bawah */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 360px;         /* biar nggak kepanjangan di device besar */
+  background: #fff;
+  border-radius: 0px 0px 0 0;  /* rounded atas saja, bawah rata */
+  box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 18px;
+  z-index: 9999;
+}
+    .footer-btn{
+      background:transparent;border:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;color:var(--dark-blue);font-size:12px;padding:6px;border-radius:8px;
+    }
+    .footer-btn.active{background:rgba(11,45,130,0.06)}
+    .footer-btn div:first-child{font-size:18px;line-height:1}
+#loginPage.active {
+  display: flex !important;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+/* khusus halaman login / sign in */
+#loginFormPage.active,
+#signInPage.active {
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+}
+
+
+  </style>
+</head>
+<body>
+
+<!-- HALAMAN INTRO -->
+<div id="introPage" class="page active" style="
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
+  height:100vh;
+  background:inherit;
+">
+  <img src="logo_clean_up.png.png" alt="Logo" style="width:300px;height:auto; margin:0 auto;">
+</div>
+
+  <!-- HALAMAN 1: Home -->
+  <div id="home" class="page active">
+    <header>
+      <h1>Clean Up</h1>
+      <p>Saat sibuk melanda, Clean Up siap bereskan cucian Anda</p>
+    </header>
+
+    <div class="search-box"><input type="text" placeholder="Cari Laundry terdekat..." /></div>
+
+    <div class="menu">
+      <button onclick="openPage('reguler')"><span>🧺</span>Laundry Reguler</button>
+      <button onclick="openPage('express')"><span>⏱️</span>Laundry Express</button>
+      <button onclick="openPage('dryclean')"><span>👕</span>Dry Clean</button>
+      <button onclick="openPage('sepatu')"><span>👟</span>Cuci Sepatu</button>
+      <button onclick="openPage('karpet')"><span>🏠</span>Karpet & Gorden</button>
+      <button onclick="openPage('premium')"><span>⭐</span>Laundry Premium</button>
+    </div>
+
+    <div class="promo"><strong>Promo Spesial 🎉</strong>Cuci Kiloan mulai dari Rp5.000/kg hanya di Clean Up</div>
+
+    <div class="card" onclick="openPriceList('Laundry Sehat')" role="button">
+      <h3>Laundry Sehat</h3>
+      <p>500m • Rp7.000/kg</p>
+      <div class="stars">⭐⭐⭐⭐⭐</div>
+      <button class="order-btn" onclick="event.stopPropagation();openPriceList('Laundry Sehat')">Pesan</button>
+    </div>
+  </div>
+
+  <!-- HALAMAN: Promo (khusus) -->
+  <div id="promoPage" class="page">
+  <header>
+    <h1>Promo</h1>
+    <p>Penawaran & kupon khusus untuk pengguna Clean Up</p>
+  </header>
+
+  <div class="search-box"><input type="text" placeholder="Cari promo..." /></div>
+
+  <div class="card" role="button" onclick="event.stopPropagation();">
+    <h3>Promo Spesial 🎉</h3>
+    <p>Cuci Kiloan mulai dari Rp5.000/kg. Gunakan kode <strong>CLEAN25</strong> pada checkout.</p>
+  </div>
+</div>
+
+<style>
+  #footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100000;
+  }
+
+  #promoPage {
+    padding-bottom: 80px; /* agar tidak menabrak footer */
+  }
+</style>
+
+<script>
+  if(footer) footer.style.display = (pageId === 'home' || pageId === 'promoPage') ? 'flex' : 'none';
+</script>
+
+  <!-- HALAMAN 2: Kategori (Reguler) -->
+  <div id="reguler" class="page">
+    <header>
+      <h1>Clean Up</h1>
+      <p>Daftar toko: Laundry Reguler</p>
+    </header>
+    <div class="search-box"><input type="text" placeholder="Cari Laundry terdekat..." /></div>
+
+    <div class="card" onclick="openPriceList('Reguler Bersih')" role="button">
+      <h3>Reguler Bersih</h3>
+      <p>300m • Rp6.000/kg</p>
+      <div class="stars">⭐⭐⭐⭐</div>
+      <button class="order-btn" onclick="event.stopPropagation();openPriceList('Reguler Bersih')">Pesan</button>
+    </div>
+
+    <div class="card" onclick="openPriceList('Laundry Prima')" role="button">
+      <h3>Laundry Prima</h3>
+      <p>420m • Rp6.500/kg</p>
+      <div class="stars">⭐⭐⭐⭐</div>
+      <button class="order-btn" onclick="event.stopPropagation();openPriceList('Laundry Prima')">Pesan</button>
+    </div>
+  </div>
+
+  <!-- HALAMAN 2: Express -->
+  <div id="express" class="page">
+    <header>
+      <h1>Clean Up</h1>
+      <p>Daftar toko: Laundry Express</p>
+    </header>
+    <div class="search-box"><input type="text" placeholder="Cari Laundry terdekat..." /></div>
+
+    <div class="card" onclick="openPriceList('Express Cepat')" role="button">
+      <h3>Express Cepat</h3>
+      <p>400m • Rp10.000/kg</p>
+      <div class="stars">⭐⭐⭐⭐⭐</div>
+      <button class="order-btn" onclick="event.stopPropagation();openPriceList('Express Cepat')">Pesan</button>
+    </div>
+  </div>
+
+  <!-- HALAMAN 2: Dryclean -->
+  <div id="dryclean" class="page">
+    <header>
+      <h1>Clean Up</h1>
+      <p>Daftar toko: Dry Clean</p>
+    </header>
+    <div class="search-box"><input type="text" placeholder="Cari Laundry terdekat..." /></div>
+
+    <div class="card" onclick="openPriceList('DryClean Pro')" role="button">
+      <h3>DryClean Pro</h3>
+      <p>250m • Harga per item</p>
+      <div class="stars">⭐⭐⭐⭐</div>
+      <button class="order-btn" onclick="event.stopPropagation();openPriceList('DryClean Pro')">Pesan</button>
+    </div>
+  </div>
+
+  <!-- HALAMAN 2: Sepatu -->
+  <div id="sepatu" class="page">
+    <header>
+      <h1>Clean Up</h1>
+      <p>Daftar toko: Cuci Sepatu</p>
+    </header>
+    <div class="search-box"><input type="text" placeholder="Cari Laundry terdekat..." /></div>
+
+    <div class="card" onclick="openPriceList('Sepatu Kinclong')" role="button">
+      <h3>Sepatu Kinclong</h3>
+      <p>350m • Rp15.000/pasang</p>
+      <div class="stars">⭐⭐⭐⭐⭐</div>
+      <button class="order-btn" onclick="event.stopPropagation();openPriceList('Sepatu Kinclong')">Pesan</button>
+    </div>
+  </div>
+
+  <!-- HALAMAN 2: Karpet -->
+  <div id="karpet" class="page">
+    <header>
+      <h1>Clean Up</h1>
+      <p>Daftar toko: Karpet & Gorden</p>
+    </header>
+    <div class="search-box"><input type="text" placeholder="Cari Laundry terdekat..." /></div>
+
+    <div class="card" onclick="openPriceList('Karpet Berseri')" role="button">
+      <h3>Karpet Berseri</h3>
+      <p>600m • Rp20.000/m²</p>
+      <div class="stars">⭐⭐⭐⭐</div>
+      <button class="order-btn" onclick="event.stopPropagation();openPriceList('Karpet Berseri')">Pesan</button>
+    </div>
+  </div>
+
+  <!-- HALAMAN 2: Premium -->
+  <div id="premium" class="page">
+    <header>
+      <h1>Clean Up</h1>
+      <p>Daftar toko: Premium</p>
+    </header>
+    <div class="search-box"><input type="text" placeholder="Cari Laundry terdekat..." /></div>
+
+    <div class="card" onclick="openPriceList('Premium Class')" role="button">
+      <h3>Premium Class</h3>
+      <p>700m • Rp25.000/kg</p>
+      <div class="stars">⭐⭐⭐⭐⭐</div>
+      <button class="order-btn" onclick="event.stopPropagation();openPriceList('Premium Class')">Pesan</button>
+    </div>
+  </div>
+
+  <!-- HALAMAN: Daftar Harga (untuk tiap toko) -->
+  <div id="priceListPage" class="page">
+    <header>
+      <h1 id="priceHeader">Clean Up</h1>
+      <p id="priceSub">Daftar layanan</p>
+    </header>
+    <div class="search-box"><input id="priceSearch" type="text" placeholder="Cari Laundry terdekat..." /></div>
+
+    <div id="pricePanel" class="price-list-panel">
+      <div id="priceItems"></div>
+    </div>
+  </div>
+
+  <!-- HALAMAN: Order / Checkout page (baru) -->
+  <div id="orderPage" class="page">
+    <header>
+      <h1>Pesanan Anda</h1>
+      <p>Periksa alamat dan rincian sebelum pesan</p>
+    </header>
+
+    <div class="order-panel">
+      <label><strong>Alamat Pengambilan / Pengiriman</strong></label>
+      <div style="height:8px"></div>
+      <div class="address-row">
+        <input id="orderAddress" class="address-input" type="text" placeholder="Ketik alamat atau gunakan peta" />
+        <button class="small-btn" onclick="useLocation()">Lokasi</button>
+      </div>
+      <div style="height:8px"></div>
+      <button class="small-btn" style="width:100%;margin-bottom:8px" onclick="openMapForAddress()">Buka Peta</button>
+
+      <!-- orderMap akan muncul di sini setelah pengguna klik Buka Peta -->
+      <div id="orderMap"></div>
+
+      <!-- ALAMAT (readonly) - DITEMPATKAN DI BAWAH MAPS; akan muncul ketika tombol 'Lokasi' diklik -->
+      <div id="fromAddressContainer" style="display:none;margin-top:8px;">
+        <label><strong>Alamat</strong></label>
+        <div id="fromAddress" class="from-address-text" aria-readonly="true" role="status"></div>
+      </div>
+
+      <div style="height:12px"></div>
+      <div><strong>Rincian Pesanan</strong></div>
+      <div class="order-items" id="orderItems"></div>
+
+      <div style="height:8px"></div>
+      <div>
+        <label><strong>Ongkos Kirim</strong></label>
+        <div style="height:6px"></div>
+        <div>
+          <label><input type="radio" name="ship" value="5000" checked onchange="recalcTotal()" /> Standard (Rp5.000)</label>
+        </div>
+        <div>
+          <label><input type="radio" name="ship" value="10000" onchange="recalcTotal()" /> Express (Rp10.000)</label>
+        </div>
+      </div>
+
+      <div class="promo-row">
+        <input id="promoCode" class="promo-input" type="text" placeholder="Masukkan kode promo (opsional)" />
+        <button class="small-btn" onclick="applyPromo()">Gunakan</button>
+      </div>
+      <div id="promoMsg" style="font-size:13px;color:green;margin-top:6px"></div>
+
+      <div class="payment-row">
+        <label><strong>Metode Pembayaran</strong></label>
+        <div style="height:6px"></div>
+        <select id="paymentMethod" class="promo-input">
+          <option value="">Pilih metode pembayaran</option>
+          <option value="Q-RIS">Q-RIS</option>
+          <option value="COD">Bayar di Tempat (COD)</option>
+        </select>
+      </div>
+
+      <div style="height:8px"></div>
+      <div class="summary-row"><div>Subtotal</div><div id="orderSubtotal">Rp0</div></div>
+      <div class="summary-row"><div>Ongkir</div><div id="orderShipping">Rp0</div></div>
+      <div class="summary-row"><div>Diskon</div><div id="orderDiscount">-Rp0</div></div>
+      <div class="summary-row" style="font-size:18px"><div>Total</div><div id="orderTotal">Rp0</div></div>
+
+      <button id="placeOrderBtn" class="pesan-btn" onclick="placeOrder()" disabled>Pesan Sekarang</button>
+    </div>
+  </div>
+
+  <!-- Pesanan Berhasil page -->
+  <div id="successPage" class="page">
+    <header>
+      <h1>Pesanan Berhasil</h1>
+      <p>Kontak driver dan laundry</p>
+    </header>
+
+    <div class="order-panel">
+      <div class="contact-card">
+        <div class="contact-row">
+	 <div>
+           <div class="contact-name" id="successDriverName">Driver</div>
+	   <div class="stars">⭐⭐⭐⭐☆</div>
+          </div>
+          <div class="contact-actions">
+            <button class="small-btn" id="successDriverChatBtn">💬</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="contact-card">
+        <div class="contact-row">
+          <div class="contact-name" id="successLaundryName">Laundry</div>
+          <div class="contact-actions">
+            <button class="small-btn" id="successLaundryChatBtn">💬</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="height:8px"></div>
+      <div id="successQR" style="display:none;text-align:center;margin-top:12px">
+        <div style="display:inline-block;background:#fff;padding:10px;border-radius:8px;border:1px solid #ddd">
+          <!-- dummy QRIS SVG -->
+          <svg width="150" height="150" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <rect width="100" height="100" fill="#fff" />
+            <rect x="8" y="8" width="24" height="24" fill="#000" />
+            <rect x="38" y="8" width="10" height="10" fill="#000" />
+            <rect x="52" y="8" width="10" height="10" fill="#000" />
+            <rect x="72" y="8" width="18" height="18" fill="#000" />
+            <rect x="8" y="38" width="10" height="10" fill="#000" />
+            <rect x="22" y="38" width="18" height="18" fill="#000" />
+            <rect x="52" y="38" width="10" height="10" fill="#000" />
+            <rect x="72" y="38" width="10" height="10" fill="#000" />
+            <rect x="8" y="68" width="18" height="10" fill="#000" />
+            <rect x="30" y="68" width="10" height="10" fill="#000" />
+            <rect x="44" y="68" width="10" height="10" fill="#000" />
+            <rect x="56" y="68" width="18" height="18" fill="#000" />
+          </svg>
+          <div style="font-size:12px;color:#000;margin-top:8px">QRIS Dummy - Scan untuk bayar</div>
+        </div>
+      </div>
+
+<!-- Invoice Card -->
+<div id="successInvoice" style="display:none;margin-top:12px;">
+  <div style="
+    background:#fff;
+    border-radius:12px;
+    padding:14px 16px;
+    box-shadow:0 2px 6px rgba(0,0,0,0.08);
+    font-size:14px;
+    color:#333;
+  ">
+    <!-- Header -->
+    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #eee;padding-bottom:6px;margin-bottom:10px;">
+      <h3 style="margin:0;font-size:15px;font-weight:600;color:#222;">Invoice</h3>
+      <span style="font-size:13px;font-weight:600;color:green;">PAID ✅</span>
+    </div>
+
+    <!-- Body Content -->
+    <div id="invoiceContent" style="line-height:1.6;font-size:13px;">
+      <div style="display:flex;justify-content:space-between;border-bottom:1px solid #f0f0f0;padding:4px 0;">
+        <span style="font-weight:500;">Toko</span>
+        <span>Express Cepat</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;border-bottom:1px solid #f0f0f0;padding:4px 0;">
+        <span style="font-weight:500;">Alamat</span>
+        <span style="max-width:55%;text-align:right;">Santika Hotel, Jalan Sumatra, Bandung</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;border-bottom:1px solid #f0f0f0;padding:4px 0;">
+        <span style="font-weight:500;">Total Bayar</span>
+        <span>Rp15.000</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:4px 0;">
+        <span style="font-weight:500;">Metode</span>
+        <span>Q-RIS</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+      <div style="height:8px"></div>
+      <button id="backHomeBtn" class="pesan-btn" style="display:none;" onclick="openPage('home')">
+  Kembali ke Home
+</button> 
+    </div>
+  </div>
+
+
+<!-- HALAMAN: Profile -->
+<div id="profilePage" class="page" style="
+  position:absolute;
+  top:0; left:0; right:0;
+  bottom:80px;              /* <-- beri ruang untuk footer */
+  display:none;
+  z-index:0;                 /* footer di atasnya */
+  background:inherit;
+  padding:5px 14px 20px;    /* <-- header jadi lebih ke atas */
+  overflow-y:auto;
+  font-family:'Times New Roman', serif;
+  max-width:360px;
+  margin:0 auto;
+  box-sizing:border-box;
+">
+  <h2 style="text-align:center;color:#fff;margin-bottom:4px;font-size:20px;">Profil Saya</h2>
+  <p style="text-align:center;color:#f1f1f1;margin-bottom:20px;font-size:13px;">
+    Informasi akun dan pengaturan pengguna
+  </p>
+
+  <div style="background:#fff;color:#000;padding:12px;border-radius:12px;margin-bottom:12px;box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:50px;height:50px;border-radius:50%;background:#ddd;display:grid;place-items:center;font-size:22px;">👤</div>
+      <div>
+       <div style="font-weight:700;font-size:15px;cursor:pointer;" onclick="gotoLogin()">
+         Nama Pengguna
+      </div>
+        <div style="font-size:12px;color:#555;">user@email.com</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="background:#fff;color:#000;padding:12px;border-radius:12px;margin-bottom:12px;box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+    <div style="font-weight:600;margin-bottom:6px;font-size:14px;">Akun Saya</div>
+    <button style="display:block;width:100%;padding:9px;margin-bottom:6px;border:1px solid #ddd;border-radius:8px;background:#f9f9f9;text-align:left;font-size:13px;">
+      🎟 Point Up
+    </button>
+    <button style="display:block;width:100%;padding:9px;margin-bottom:6px;border:1px solid #ddd;border-radius:8px;background:#f9f9f9;text-align:left;font-size:13px;">
+      💰 Pocket Up
+    </button>
+    <button style="display:block;width:100%;padding:9px;margin-bottom:6px;border:1px solid #ddd;border-radius:8px;background:#f9f9f9;text-align:left;font-size:13px;">
+      📍 Alamat Tersimpan
+    </button>
+    <button style="display:block;width:100%;padding:9px;margin-bottom:6px;border:1px solid #ddd;border-radius:8px;background:#f9f9f9;text-align:left;font-size:13px;">
+      🔒 Ganti Password
+    </button>
+    <button style="display:block;width:100%;padding:9px;margin-bottom:6px;border:1px solid #ddd;border-radius:8px;background:#f9f9f9;text-align:left;font-size:13px;">
+      ⚙️ Pengaturan
+    </button>
+    <button style="display:block;width:100%;padding:9px;border:1px solid #f33;border-radius:8px;background:#ffeaea;color:#c00;text-align:left;font-size:13px;">
+      🚪 Keluar
+    </button>
+  </div>
+</div>
+<!-- HALAMAN: Login/Sign In -->
+<!-- HALAMAN: Login/Sign In -->
+<div id="loginPage" class="page" style="background:inherit; color:#fff; text-align:center;">
+  <h2 style="margin-bottom:20px;">Selamat Datang</h2>
+
+  <button style="width:200px; padding:12px; margin:8px 0;
+    border:none; border-radius:8px; background:#fff; color:#0b2d82;
+    font-size:15px; font-weight:600; cursor:pointer;">
+    Login Akun
+  </button>
+
+  <button style="width:200px; padding:12px; margin:8px 0;
+    border:none; border-radius:8px; background:#fff; color:#0b2d82;
+    font-size:15px; font-weight:600; cursor:pointer;">
+    Sign In Akun
+  </button>
+</div>
+
+<!-- HALAMAN: Login Form -->
+<div id="loginFormPage" class="page" style="background:inherit;">
+  <div style="background:#fff;color:#0b2d82;padding:30px 25px;border-radius:16px;
+              box-shadow:0 4px 12px rgba(0,0,0,0.15);width:75%;max-width:360px;text-align:center;margin:auto;">
+    <h2 style="margin-bottom:20px;">Buat Akun</h2>
+    <form id="loginForm" style="display:flex;flex-direction:column;gap:14px;">
+      <input id="regName" type="text" placeholder="Nama Lengkap" required style="padding:12px;border-radius:8px;border:1px solid #ccc;font-size:14px;" />
+      <input id="regPhone" type="text" placeholder="Nomor HP" required style="padding:12px;border-radius:8px;border:1px solid #ccc;font-size:14px;" />
+      <input id="regEmail" type="email" placeholder="Email" required style="padding:12px;border-radius:8px;border:1px solid #ccc;font-size:14px;" />
+      <input id="regPass" type="password" placeholder="Password" required style="padding:12px;border-radius:8px;border:1px solid #ccc;font-size:14px;" />
+      <input id="regPass2" type="password" placeholder="Verifikasi Password" required style="padding:12px;border-radius:8px;border:1px solid #ccc;font-size:14px;" />
+      <button type="submit" style="padding:12px;border:none;border-radius:8px;background:#0b2d82;color:#fff;font-weight:600;cursor:pointer;font-size:15px;">Simpan Akun</button>
+    </form>
+  </div>
+</div>
+
+<!-- HALAMAN: Sign In -->
+<div id="signInPage" class="page" style="background:inherit;">
+  <div style="background:#fff;color:#0b2d82;padding:30px 25px;border-radius:16px;
+              box-shadow:0 4px 12px rgba(0,0,0,0.15);width:75%;max-width:360px;text-align:center;margin:auto;">
+    <h2 style="margin-bottom:20px;">Masuk Akun</h2>
+    <form id="signInForm" style="display:flex;flex-direction:column;gap:14px;">
+      <input id="signName" type="text" placeholder="Nama Pengguna" required style="padding:12px;border-radius:8px;border:1px solid #ccc;font-size:14px;" />
+      <input id="signPass" type="password" placeholder="Password" required style="padding:12px;border-radius:8px;border:1px solid #ccc;font-size:14px;" />
+      <button type="submit" style="padding:12px;border:none;border-radius:8px;background:#0b2d82;color:#fff;font-weight:600;cursor:pointer;font-size:15px;">Masuk</button>
+    </form>
+  </div>
+</div>
+
+
+
+  <!-- Chat Page -->
+  <div id="chatPage" class="page">
+    <header>
+      <h1>Chat</h1>
+      <p>Hubungi layanan pelanggan</p>
+    </header>
+    <div class="order-panel">
+      <div style="padding:8px 0;color:#333">Belum ada chat aktif. Gunakan tombol di bawah untuk membuka WhatsApp.</div>
+      <div style="height:8px"></div>
+      <div style="display:flex;gap:8px">
+        <button class="small-btn" onclick="window.open('https://wa.me/')">Buka WhatsApp</button>
+        <button class="small-btn" onclick="openPage('home')">Kembali</button>
+      </div>
+    </div>
+  </div>
+
+<!-- HALAMAN: Riwayat -->
+<div id="historyPage" class="page" style="
+  position:absolute;
+  top:0; left:0; right:0;
+  bottom:80px;               
+  display:none;
+  z-index:0;                   
+  background:inherit;
+  padding:5px 14px 20px;      /* naikkan dari 50px ke 40px */
+  overflow-y:auto;
+  font-family:'Times New Roman', serif;
+  max-width:360px;
+  margin:0 auto;
+  box-sizing:border-box;
+">
+  <h2 style="text-align:center;color:#fff;margin-bottom:4px;font-size:20px;">Pesanan & Riwayat</h2>
+  <p style="text-align:center;color:#e0e6f8;font-size:13px;margin-bottom:18px;">
+    Lihat pesanan aktif dan riwayat transaksi laundry Anda
+  </p>
+
+  <!-- Tab -->
+  <div style="display:flex;background:rgba(255,255,255,0.2);border-radius:10px;overflow:hidden;margin-bottom:18px;">
+    <button id="tabActive" onclick="switchHistoryTab('active')" 
+      style="flex:1;padding:10px;font-size:14px;border:none;background:#fff;color:#0b2d82;font-weight:600;">
+      Pesanan Saya
+    </button>
+    <button id="tabDone" onclick="switchHistoryTab('done')" 
+      style="flex:1;padding:10px;font-size:14px;border:none;background:transparent;color:#fff;font-weight:600;">
+      Riwayat Pesanan
+    </button>
+  </div>
+
+  <!-- Daftar -->
+  <div id="historyActiveList"></div>
+  <div id="historyDoneList" style="display:none;"></div>
+</div>
+
+
+  <!-- CART POPUP -->
+  <div id="cartPopup" class="cart-popup" aria-hidden="true">
+    <div class="cart-header">Keranjang</div>
+    <ul id="cartList" class="cart-list"></ul>
+    <button id="checkoutBtn" class="checkout-btn" onclick="checkout()">Checkout</button>
+  </div>
+
+    <!-- Footer Navigation (Home only) -->
+  <nav id="footerNav" class="footer-nav" style="display:none">
+    <button class="footer-btn" data-key="home" onclick="gotoHome(); setActiveFooter('home')"><div>🏠</div><div>Beranda</div></button>
+    <button class="footer-btn" data-key="promo" onclick="gotoPromo(); setActiveFooter('promo')"><div>🎉</div><div>Promo</div></button>
+    <button class="footer-btn" data-key="history" onclick="gotoHistory(); setActiveFooter('history')"><div>📑</div><div>Riwayat</div></button>
+    <button class="footer-btn" data-key="profile" onclick="gotoProfile(); setActiveFooter('profile')"><div>👤</div><div>Profile</div></button>
+  </nav>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    // price data
+    const priceData = {
+      'Laundry Sehat': [
+        {name:'Cuci Kiloan', price:'Rp7.000/kg'},
+        {name:'Setrika', price:'Rp5.000'}
+      ],
+      'Reguler Bersih': [
+        {name:'Cuci Kiloan', price:'Rp6.000/kg'},
+        {name:'Cuci + Setrika', price:'Rp8.000/kg'}
+      ],
+      'Laundry Prima': [
+        {name:'Cuci Kiloan', price:'Rp6.500/kg'},
+        {name:'Setrika', price:'Rp4.500'}
+      ],
+      'Express Cepat': [
+        {name:'Cuci Kiloan', price:'Rp10.000/kg'},
+        {name:'Setrika', price:'Rp7.000'}
+      ],
+      'DryClean Pro': [
+        {name:'Jas', price:'Rp25.000'},
+        {name:'Gaun', price:'Rp30.000'}
+      ],
+      'Sepatu Kinclong': [
+        {name:'Cuci Sepatu', price:'Rp15.000/pasang'}
+      ],
+      'Karpet Berseri': [
+        {name:'Cuci Karpet', price:'Rp20.000/m²'}
+      ],
+      'Premium Class': [
+        {name:'Cuci Premium', price:'Rp25.000/kg'}
+      ]
+    };
+
+    // sample store coordinates (opsional)
+    const storeLocations = {
+      'Laundry Sehat': [-6.9174639,107.6191238],
+      'Reguler Bersih': [-6.9225,107.6101],
+      'Laundry Prima': [-6.9143,107.6065],
+      'Express Cepat': [-6.9210,107.6150],
+      'DryClean Pro': [-6.9100,107.6200],
+      'Sepatu Kinclong': [-6.9130,107.6120],
+      'Karpet Berseri': [-6.9160,107.6080],
+      'Premium Class': [-6.9180,107.6170]
+    };
+
+    // state
+    let currentStore = null;
+    const cart = [];
+    let promoApplied = {code:null, value:0};
+
+    // order map state
+    window.orderMap = null;
+    window.orderMapMarker = null;
+    window.orderMapClickHandler = null;
+
+    // Fungsi pindah halaman
+// Fungsi pindah halaman
+function openPage(pageId){
+  // sembunyikan semua halaman
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const el = document.getElementById(pageId);
+  if(el) el.classList.add('active');
+
+  // tampilkan/sembunyikan footer sesuai halaman
+  const footer = document.getElementById('footerNav');
+  if (footer) {
+    if (['home','promoPage','riwayatPage','profilePage'].includes(pageId)) {
+      footer.style.display = "flex";
+    } else {
+      footer.style.display = "none";
+    }
+  }
+
+  // update footer active state
+  try {
+    document.querySelectorAll('.footer-btn').forEach(b=>b.classList.remove('active'));
+    if (pageId === 'home') {
+      const hb = document.querySelector('.footer-btn[data-key="home"]');
+      if(hb) hb.classList.add('active');
+    }
+  } catch(e){}
+
+  // scroll ke atas kalau buka home
+  if (pageId === 'home') { 
+    try{ window.scrollTo({top:0, behavior:'smooth'}); } catch(e){} 
+  }
+
+  // tambahkan state ke browser history
+  history.pushState({ page: pageId }, "", "#" + pageId);
+
+  // popup harus hilang jika bukan di daftar harga
+  const popup = document.getElementById('cartPopup');
+  if (popup && !['promoPage','hargaPage'].includes(pageId)) {
+    popup.style.display = "none";
+  }
+}
+
+// Fungsi buka popup cart
+function openCartPopup(){
+  const popup = document.getElementById('cartPopup');
+  if(!popup) return;
+  // ambil page aktif
+  const currentPage = history.state && history.state.page ? history.state.page : 'home';
+  if(!['promoPage','hargaPage'].includes(currentPage)) return; // cuma boleh di halaman harga
+  popup.style.display = "flex";
+  // push state khusus popup
+  history.pushState({ page: currentPage, popup:true }, "", "#" + currentPage + "-popup");
+}
+
+// Fungsi tutup popup cart
+function closeCartPopup(){
+  const popup = document.getElementById('cartPopup');
+  if(!popup) return;
+  // kalau state sekarang popup, mundur 1 step
+  if(history.state && history.state.popup){
+    history.back();
+  } else {
+    popup.style.display = "none";
+  }
+}
+
+// Tangani tombol back HP/browser
+window.onpopstate = function(event) {
+  if (event.state && event.state.page) {
+    // sembunyikan semua halaman
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(event.state.page).classList.add('active');
+
+    // tampilkan/sembunyikan footer
+    const footer = document.getElementById('footerNav');
+    if (footer) {
+      if (['home','promoPage','riwayatPage','profilePage'].includes(event.state.page)) {
+        footer.style.display = "flex";
+      } else {
+        footer.style.display = "none";
+      }
+    }
+
+    // popup: buka kalau state.popup true, tutup kalau false
+    const popup = document.getElementById('cartPopup');
+    if (popup) {
+      if (event.state.popup && ['promoPage','hargaPage'].includes(event.state.page)) {
+        popup.style.display = "flex";
+      } else {
+        popup.style.display = "none";
+      }
+    }
+  }
+};
+
+
+    function gotoHome(){ openPage('home'); }
+    function gotoPromo(){
+  hideOverlayPages();        // sembunyikan profile & history
+  openPage('promoPage');     // langsung buka halaman promo
+}
+
+function hideOverlayPages(){
+  const profile = document.getElementById('profilePage');
+  const history = document.getElementById('historyPage');
+  if(profile) profile.style.display = 'none';
+  if(history) history.style.display = 'none';
+}
+
+    function gotoHistory(){
+  // sembunyikan semua halaman lain
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  // tampilkan halaman Riwayat
+  const historyPage = document.getElementById('historyPage');
+  if(historyPage) historyPage.classList.add('active');
+  // render daftar riwayat
+  renderHistory();
+}
+function switchHistoryTab(tab){
+  const a = document.getElementById('tabActive');
+  const d = document.getElementById('tabDone');
+  const la = document.getElementById('historyActiveList');
+  const ld = document.getElementById('historyDoneList');
+
+  if(tab==='active'){
+    a.style.background = '#fff';
+    a.style.color = '#0b2d82';
+    d.style.background = 'transparent';
+    d.style.color = '#fff';
+    la.style.display = 'block';
+    ld.style.display = 'none';
+  } else {
+    d.style.background = '#fff';
+    d.style.color = '#0b2d82';
+    a.style.background = 'transparent';
+    a.style.color = '#fff';
+    la.style.display = 'none';
+    ld.style.display = 'block';
+  }
+}
+
+function renderHistory(){
+  const data = JSON.parse(localStorage.getItem('cleanUpOrders')||'[]');
+  const active = data.filter(o=>!o.selesai);
+  const done = data.filter(o=>o.selesai);
+
+  const card = (o,status) => `
+    <div style="
+      background:#fff;color:#000;padding:12px 14px;border-radius:12px;
+      margin-bottom:12px;box-shadow:0 2px 4px rgba(0,0,0,0.1);
+    ">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div style="font-weight:700;font-size:15px;">${o.laundry||'Laundry'} #${o.id||''}</div>
+        <span style="font-size:12px;color:${status==='active'?'#ffc107':'#4caf50'};font-weight:600;">
+          ${status==='active'?'Diproses':'Selesai'}
+        </span>
+      </div>
+      <div style="font-size:12px;color:#666;">${new Date(o.createdAt).toLocaleString('id-ID')}</div>
+      <div style="font-size:13px;margin-top:4px;">Total: Rp${(o.total||0).toLocaleString('id-ID')}</div>
+    </div>
+  `;
+
+  document.getElementById('historyActiveList').innerHTML =
+    active.length ? active.map(o=>card(o,'active')).join('') :
+    '<p style="text-align:center;color:#fff;font-size:13px;">Belum ada pesanan aktif</p>';
+
+  document.getElementById('historyDoneList').innerHTML =
+    done.length ? done.map(o=>card(o,'done')).join('') :
+    '<p style="text-align:center;color:#fff;font-size:13px;">Belum ada riwayat pesanan</p>';
+}
+
+    function gotoProfile(){
+  document.getElementById('profilePage').style.display = 'block';
+}
+
+
+
+    function openPriceList(storeName){
+      currentStore = storeName;
+      openPage('priceListPage');
+      document.getElementById('priceHeader').innerText = storeName;
+      document.getElementById('priceSub').innerText = 'Daftar harga layanan';
+
+      const items = priceData[storeName] || [];
+      const container = document.getElementById('priceItems');
+      container.innerHTML = '';
+
+      if(items.length === 0){
+        container.innerHTML = '<div style="color:#333">Tidak ada daftar harga untuk toko ini.</div>';
+        return;
+      }
+
+      items.forEach((it, idx)=>{
+        const row = document.createElement('div');
+        row.className = 'price-row';
+
+        const left = document.createElement('div'); left.className = 'price-left';
+        const name = document.createElement('div'); name.className = 'price-name'; name.textContent = it.name;
+        const cost = document.createElement('div'); cost.className = 'price-cost'; cost.textContent = it.price;
+        left.appendChild(name); left.appendChild(cost);
+
+        const actions = document.createElement('div'); actions.className = 'price-actions';
+        const choose = document.createElement('button'); choose.className = 'choose-btn'; choose.textContent = 'Pilih';
+        choose.onclick = ()=>{ addToCart(it.name, it.price); };
+        const add = document.createElement('button'); add.className = 'add-btn'; add.textContent = '+';
+        add.onclick = ()=>{ addToCart(it.name, it.price); };
+
+        actions.appendChild(choose); actions.appendChild(add);
+
+        row.appendChild(left); row.appendChild(actions);
+        container.appendChild(row);
+      });
+    }
+
+    function addToCart(name, price){
+      cart.push({store: currentStore, name, price});
+      renderCart();
+    }
+
+    function removeFromCart(index){
+      if(index >=0 && index < cart.length) cart.splice(index,1);
+      renderCart();
+    }
+
+    function renderCart(){
+      const popup = document.getElementById('cartPopup');
+      const list = document.getElementById('cartList');
+      list.innerHTML = '';
+      cart.forEach((it, i)=>{
+        const li = document.createElement('li'); li.className = 'cart-item';
+        const left = document.createElement('div'); left.textContent = `${it.name} (${it.store}) - ${it.price}`;
+        const btn = document.createElement('button'); btn.textContent='-'; btn.onclick = ()=> removeFromCart(i);
+        li.appendChild(left); li.appendChild(btn);
+        list.appendChild(li);
+      });
+      popup.style.display = cart.length ? 'block' : 'none';
+      popup.setAttribute('aria-hidden', cart.length ? 'false' : 'true');
+    }
+
+    // parse numeric from price strings like "Rp6.000/kg" -> 6000
+    function parsePrice(str){
+      if(!str) return 0;
+      const digits = (''+str).replace(/[^0-9]/g,'');
+      return digits ? parseInt(digits,10) : 0;
+    }
+
+    function formatRp(n){
+      try{ return 'Rp' + Number(n).toLocaleString('id-ID'); }catch(e){return 'Rp'+n}
+    }
+
+    function getSubtotal(){
+      return cart.reduce((sum,it)=> sum + parsePrice(it.price), 0);
+    }
+function gotoHome(){
+  hideOverlayPages();
+  openPage('home');
+}
+
+function gotoPromo(){
+  hideOverlayPages();
+  openPage('promoPage');
+}
+
+function gotoHistory(){
+  hideOverlayPages();
+  document.getElementById('historyPage').style.display = 'block';
+  renderHistory();
+}
+
+function gotoProfile(){
+  hideOverlayPages();
+  document.getElementById('profilePage').style.display = 'block';
+}
+
+function setActiveFooter(key) {
+      document.querySelectorAll('#footerNav .footer-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      const target = document.querySelector(`#footerNav .footer-btn[data-key="${key}"]`);
+      if (target) {
+        target.classList.add('active');
+      }
+    }
+
+    // ----- Leaflet helpers for embedded order map -----
+    function ensureOrderMapInitialized(center){
+      if(window.orderMap) return;
+      const el = document.getElementById('orderMap');
+      if(!el) return;
+      window.orderMap = L.map('orderMap', {zoomControl:true}).setView(center || [-6.914744,107.60981], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19, attribution:'© OpenStreetMap'}).addTo(window.orderMap);
+    }
+
+    function clearOrderMapMarker(){
+      if(window.orderMapMarker){ try{ window.orderMap.removeLayer(window.orderMapMarker); }catch(e){} window.orderMapMarker = null; }
+    }
+
+    // helper to show/hide the readonly From Alamat field and set its value
+    function showFromAddress(text){
+      try{
+        const container = document.getElementById('fromAddressContainer');
+        const input = document.getElementById('fromAddress');
+        if(container && input){
+          // if no explicit text provided, copy current orderAddress value
+          const v = (typeof text === 'string' && text.length) ? text : (document.getElementById('orderAddress')?.value || '');
+          input.textContent = v;
+          container.style.display = 'block';
+        }
+      }catch(e){console.warn('showFromAddress error', e)}
+    }
+    function hideFromAddress(){
+      try{ const container = document.getElementById('fromAddressContainer'); if(container) container.style.display = 'none'; }catch(e){}
+    }
+
+    // add marker and reverse geocode to autofill address
+    function addPlaceMarker(lat, lon, label){
+      ensureOrderMapInitialized([lat,lon]);
+      clearOrderMapMarker();
+      try{
+        window.orderMapMarker = L.marker([lat,lon]).addTo(window.orderMap).bindPopup(label || 'Lokasi dipilih').openPopup();
+        window.orderMap.setView([lat,lon], 15);
+      }catch(e){console.warn('marker error',e)}
+
+      // reverse geocode via Nominatim (OpenStreetMap)
+      fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&accept-language=id`)
+        .then(r=> r.ok ? r.json() : Promise.reject('no response'))
+        .then(data=>{
+          const name = data.display_name || (data.address? Object.values(data.address).join(', '): null);
+          if(name){
+            document.getElementById('orderAddress').value = name;
+            // update internal readonly field but do NOT force show (user requested show only on Lokasi click)
+            const input = document.getElementById('fromAddress'); if(input) input.textContent = name;
+          }
+        }).catch(err=>{
+          // fallback: isi dengan koordinat jika gagal
+          const fallback = `(${lat.toFixed(6)}, ${lon.toFixed(6)})`;
+          document.getElementById('orderAddress').value = fallback;
+          const input = document.getElementById('fromAddress'); if(input) input.textContent = fallback;
+        });
+    }
+
+    // open map in order page (toggled by Buka Peta).
+    // When map shown -> hide From Alamat (form sits below maps in DOM but should be hidden while map visible)
+    function openMapForAddress(){
+      const el = document.getElementById('orderMap');
+      // toggle visibility
+      const willShow = el.style.display !== 'block';
+      if(willShow){
+        hideFromAddress();
+        el.style.display = 'block';
+        ensureOrderMapInitialized();
+
+        // attach click handler: klik di peta -> tambah placemark + autofill alamat
+        if(window.orderMapClickHandler){ window.orderMap.off('click', window.orderMapClickHandler); window.orderMapClickHandler = null; }
+        window.orderMapClickHandler = function(e){
+          addPlaceMarker(e.latlng.lat, e.latlng.lng, 'Tempat pengambilan yang dipilih');
+        };
+        window.orderMap.on('click', window.orderMapClickHandler);
+
+        setTimeout(()=>{ try{ window.orderMap.invalidateSize(); }catch(e){} }, 200);
+        return;
+      }
+
+      // hide map
+      el.style.display = 'none';
+      if(window.orderMap && window.orderMapClickHandler){ window.orderMap.off('click', window.orderMapClickHandler); window.orderMapClickHandler = null; }
+    }
+
+    // Checkout -> open order page and populate (map remains hidden unless pengguna klik Buka Peta)
+    function checkout(){
+      if(cart.length === 0){ alert('Keranjang kosong'); return; }
+      promoApplied = {code:null, value:0};
+      openPage('orderPage');
+      const paymentSel = document.getElementById('paymentMethod'); if(paymentSel){ paymentSel.selectedIndex = 0; } updatePesanButtonState();
+      document.getElementById('promoCode').value = '';
+      document.getElementById('promoMsg').textContent = '';
+
+      // populate items
+      const itemsContainer = document.getElementById('orderItems');
+      itemsContainer.innerHTML = '';
+      cart.forEach((it, idx)=>{
+        const div = document.createElement('div'); div.className = 'order-item';
+        const left = document.createElement('div'); left.textContent = `${it.name} (${it.store})`;
+        const right = document.createElement('div'); right.textContent = it.price;
+        div.appendChild(left); div.appendChild(right);
+        itemsContainer.appendChild(div);
+      });
+
+      // set subtotal
+      document.getElementById('orderSubtotal').innerText = formatRp(getSubtotal());
+      // default shipping 5000
+      document.getElementById('orderShipping').innerText = formatRp(5000);
+      document.getElementById('orderDiscount').innerText = '-Rp0';
+      recalcTotal();
+      // hide cart popup
+      document.getElementById('cartPopup').style.display = 'none';
+    }
+
+    function recalcTotal(){
+      const subtotal = getSubtotal();
+      const ship = Number(document.querySelector('input[name="ship"]:checked')?.value || 5000);
+      const discount = promoApplied.value || 0;
+      const total = Math.max(0, subtotal + ship - discount);
+      document.getElementById('orderSubtotal').innerText = formatRp(subtotal);
+      document.getElementById('orderShipping').innerText = formatRp(ship);
+      document.getElementById('orderDiscount').innerText = '-'+formatRp(discount);
+      document.getElementById('orderTotal').innerText = formatRp(total);
+    }
+
+    function applyPromo(){
+      const code = (document.getElementById('promoCode').value || '').trim().toUpperCase();
+      const subtotal = getSubtotal();
+      if(!code){ document.getElementById('promoMsg').textContent = 'Masukkan kode promo.'; document.getElementById('promoMsg').style.color='red'; return; }
+      // simple demo promo rules
+      if(code === 'CLEAN5'){
+        promoApplied = {code, value:5000};
+        document.getElementById('promoMsg').textContent = 'Promo terpakai: Potongan Rp5.000';
+        document.getElementById('promoMsg').style.color='green';
+      } else if(code === 'CLEAN10'){
+        const disc = Math.floor(subtotal * 0.10);
+        promoApplied = {code, value:disc};
+        document.getElementById('promoMsg').textContent = 'Promo terpakai: 10%';
+        document.getElementById('promoMsg').style.color='green';
+      } else {
+        promoApplied = {code:null, value:0};
+        document.getElementById('promoMsg').textContent = 'Kode promo tidak valid';
+        document.getElementById('promoMsg').style.color='red';
+      }
+      recalcTotal();
+    }
+
+    function placeOrder(){
+      const addr = (document.getElementById('orderAddress').value || '').trim();
+      if(!addr){ alert('Isi alamat pengambilan/pengiriman terlebih dahulu.'); return; }
+      const paymentSel = document.getElementById('paymentMethod');
+      const payment = paymentSel && paymentSel.value ? paymentSel.value : '';
+      if(!payment){ alert('Pilih metode pembayaran terlebih dahulu.'); return; }
+
+      const subtotal = getSubtotal();
+      const ship = Number(document.querySelector('input[name="ship"]:checked')?.value || 5000);
+      const discount = promoApplied.value || 0;
+      const total = Math.max(0, subtotal + ship - discount);
+
+      // determine laundry name (prefer cart store if available)
+      let laundryName = currentStore || (cart.length ? cart[0].store : 'Laundry');
+
+      // sample driver/laundry contacts (in production these come from backend)
+      const driverName = 'Budi Driver';
+      const driverPhone = '+628123456789';
+      const laundryPhone = '+628198765432';
+
+      // populate success page contacts
+      const dNameEl = document.getElementById('successDriverName');
+      const dChatBtn = document.getElementById('successDriverChatBtn');
+      const dCallBtn = document.getElementById('successDriverCallBtn');
+      const lNameEl = document.getElementById('successLaundryName');
+      const lChatBtn = document.getElementById('successLaundryChatBtn');
+      const lCallBtn = document.getElementById('successLaundryCallBtn');
+      const successQR = document.getElementById('successQR');
+
+      if(dNameEl) dNameEl.innerText = driverName;
+      if(lNameEl) lNameEl.innerText = laundryName;
+
+      if(dCallBtn) dCallBtn.onclick = function(){ window.location.href = 'tel:'+driverPhone; };
+      if(dChatBtn) dChatBtn.onclick = function(){ window.open('https://wa.me/'+ driverPhone.replace(/[^0-9]/g,'')); };
+      if(lCallBtn) lCallBtn.onclick = function(){ window.location.href = 'tel:'+laundryPhone; };
+      if(lChatBtn) lChatBtn.onclick = function(){ window.open('https://wa.me/'+ laundryPhone.replace(/[^0-9]/g,'')); };
+
+      // show or hide QRIS on success page based on payment method
+      if(payment === 'Q-RIS'){
+  if(successQR) successQR.style.display = 'block';
+
+  // setelah 10 detik ganti QR ke invoice
+  setTimeout(()=>{
+    if(successQR) successQR.style.display = 'none'; // pastikan hilang total
+    const inv = document.getElementById('successInvoice');
+    if(inv){
+      inv.style.display = 'block';
+      // isi invoice
+      const backBtn = document.getElementById('backHomeBtn');
+      if(backBtn) backBtn.style.display = 'block';
+      const invContent = document.getElementById('invoiceContent');
+      if(invContent){
+        invContent.innerHTML = `
+          <div style="display:flex;justify-content:space-between;border-bottom:1px solid #f0f0f0;padding:4px 0;">
+            <span style="font-weight:500;">Toko</span>
+            <span>${laundryName}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;border-bottom:1px solid #f0f0f0;padding:4px 0;">
+            <span style="font-weight:500;">Alamat</span>
+            <span style="max-width:55%;text-align:right;">${addr}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;border-bottom:1px solid #f0f0f0;padding:4px 0;">
+            <span style="font-weight:500;">Total Bayar</span>
+            <span>${formatRp(total)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:4px 0;">
+            <span style="font-weight:500;">Metode</span>
+            <span>${payment}</span>
+          </div>
+        `;
+      }
+    }
+  }, 5000);
+} else {
+  if(successQR) successQR.style.display = 'none';
+}
+
+      // show success page
+      openPage('successPage');
+
+      // clear cart and update UI
+      cart.length = 0;
+      renderCart();
+    }
+
+    // Location helpers (modified per request): when Lokasi diklik -> hide map and show readonly From Alamat form
+    // The From Alamat value is taken from the current orderAddress (which can be filled by map selection or typed input).
+    function useLocation(){
+      // hide map if visible
+      const el = document.getElementById('orderMap');
+      if(el && el.style.display === 'block'){
+        el.style.display = 'none';
+        if(window.orderMap && window.orderMapClickHandler){ window.orderMap.off('click', window.orderMapClickHandler); window.orderMapClickHandler = null; }
+      }
+
+      // prefer the current orderAddress value (map selection or typed)
+      const current = (document.getElementById('orderAddress')?.value || '').trim();
+      if(current){
+        showFromAddress(current);
+        return;
+      }
+
+      // if orderAddress is empty but there's a map marker, try reverse geocode marker coords
+      if(window.orderMapMarker){
+        const latlng = window.orderMapMarker.getLatLng();
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latlng.lat}&lon=${latlng.lng}&accept-language=id`)
+          .then(r=> r.ok ? r.json() : Promise.reject('no response'))
+          .then(data=>{
+            const name = data.display_name || (data.address? Object.values(data.address).join(', '): null);
+            showFromAddress(name || `(${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)})`);
+            document.getElementById('orderAddress').value = name || `(${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)})`;
+          }).catch(err=>{
+            const fallback = `(${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)})`;
+            showFromAddress(fallback);
+            document.getElementById('orderAddress').value = fallback;
+          });
+        return;
+      }
+
+      // nothing to show
+      alert('Tidak ada alamat terisi. Silakan pilih di peta atau ketik alamat terlebih dahulu.');
+    }
+
+    // helper: enable/disable Pesan Sekarang based on payment selection
+    function updatePesanButtonState(){
+      const sel = document.getElementById('paymentMethod');
+      const btn = document.getElementById('placeOrderBtn');
+      if(!btn) return;
+      if(sel && sel.value && sel.value.trim() !== '') btn.disabled = false; else btn.disabled = true;
+    }
+    // attach change listener if payment select exists
+    const pmEl = document.getElementById('paymentMethod');
+    if(pmEl) pmEl.addEventListener('change', updatePesanButtonState);
+    updatePesanButtonState();
+
+    // initial
+    openPage('home');
+
+// Intro Page: tampil 5 detik lalu masuk ke Home
+document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+document.getElementById('introPage').classList.add('active');
+
+const footer = document.getElementById("footerNav");
+if (footer) footer.style.display = "none";
+
+// Setelah 5 detik → sembunyikan intro & tampilkan home + footer
+    setTimeout(() => {
+      const intro = document.getElementById("introPage");
+      if (intro) intro.style.display = "none";
+      openPage('home');
+      if (footer) footer.style.display = "flex";
+    }, 2500);
+function gotoLogin(){
+  document.getElementById('profilePage').style.display = 'none'; 
+  openPage('loginPage');
+}
+// Arahkan tombol di loginPage
+document.querySelector('#loginPage button:nth-of-type(1)').onclick = ()=> openPage('loginFormPage');
+document.querySelector('#loginPage button:nth-of-type(2)').onclick = ()=> openPage('signInPage');
+
+// Simpan akun baru
+document.getElementById('loginForm').onsubmit = function(e){
+  e.preventDefault();
+  const nama = document.getElementById('regName').value.trim();
+  const hp = document.getElementById('regPhone').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pass = document.getElementById('regPass').value;
+  const pass2 = document.getElementById('regPass2').value;
+
+  if(pass !== pass2){ alert("Password tidak sama!"); return; }
+
+  const user = {nama,hp,email,pass};
+  localStorage.setItem('cleanUpUser', JSON.stringify(user));
+
+  alert("Akun berhasil dibuat!");
+  openPage('signInPage');
+};
+
+// Proses Sign In
+document.getElementById('signInForm').onsubmit = function(e){
+  e.preventDefault();
+  const nama = document.getElementById('signName').value.trim();
+  const pass = document.getElementById('signPass').value;
+
+  const user = JSON.parse(localStorage.getItem('cleanUpUser')||'null');
+  if(!user){ alert("Belum ada akun. Silakan buat akun."); openPage('loginFormPage'); return; }
+
+  if(user.nama === nama && user.pass === pass){
+    alert("Login berhasil!");
+    // Update profilePage
+    document.querySelector('#profilePage div[style*="font-weight:700"]').innerText = user.nama;
+    document.querySelector('#profilePage div[style*="font-size:12px;color:#555"]').innerText = user.email;
+    openPage('profilePage');
+  } else {
+    alert("Nama atau password salah!");
+  }
+};
+
+  </script>
+</body>
+</html>
+
+
+
