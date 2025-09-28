@@ -176,7 +176,166 @@
   justify-content: center;
   align-items: center;
 }
+#pointUpPage {
+  background:inherit; /* biar sama kayak home */
+  color: #fff; /* teks default putih */
+  padding: 16px;
+  min-height: 100vh; /* isi full layar */
+  box-sizing: border-box;
+}
 
+#pointUpPage h2 {
+  color: #fff;
+  font-size: 20px;
+  margin-bottom: 16px;
+}
+
+#pointUpPage .card, 
+#pointUpPage div[style*="background:#fff"] {
+  background: #fff !important;
+  color: #000 !important;
+}
+
+#pocketUpPage .saldo-box {
+  background: linear-gradient(180deg, #ffb300, #ff8c00);
+  color: #fff;
+  padding: 16px;
+  border-radius: 12px;
+  margin: 0 12px 12px;  /* <-- kiri-kanan 12px agar sejajar card */
+  box-sizing: border-box;
+}
+
+#pocketUpPage .card {
+  background: #fff;
+  color: #000;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#pocketUpPage .pocket-menu {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+#pocketUpPage .menu-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+#pocketUpPage .menu-item .icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #f5f5f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  margin-bottom: 6px;
+}
+
+#pocketUpPage .menu-item span {
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+}
+
+#orderAddressPage {
+  background: inherit;
+  color: #000;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+#orderAddressPage header {
+  padding: 18px 12px 8px;
+  text-align: center;
+  color: #fff;
+}
+
+#orderAddressPage header h1 {
+  margin: 0;
+  font-size: 20px;
+}
+
+#orderAddressPage header p {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #e6e6e6;
+}
+
+#orderAddressPage .order-panel {
+  background: #fff;
+  color: #000;
+  border-radius: 12px;
+  padding: 12px;
+  margin: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
+
+#orderAddressPage .address-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+#orderAddressPage .address-input {
+  flex: 1;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+}
+
+#orderAddressPage .small-btn {
+  background: var(--dark-blue);
+  color: #fff;
+  border: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+#orderAddressPage .pesan-btn {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  background: var(--dark-blue);
+  color: #fff;
+  border: 0;
+  padding: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+#orderAddressPage #orderMap {
+  height: 240px;
+  margin-top: 8px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f6f6f6;
+  display: none;
+}
+
+#orderAddressPage #fromAddressContainer {
+  display: none;
+  margin-top: 8px;
+}
+
+#orderAddressPage .from-address-text {
+  margin-top: 6px;
+  font-size: 14px;
+  color: #333;
+  line-height: 1.35;
+}
 
   </style>
 </head>
@@ -234,6 +393,12 @@
   <div class="card" role="button" onclick="event.stopPropagation();">
     <h3>Promo Spesial 🎉</h3>
     <p>Cuci Kiloan mulai dari Rp5.000/kg. Gunakan kode <strong>CLEAN25</strong> pada checkout.</p>
+  </div>
+
+  <div class="card" role="button" onclick="event.stopPropagation();">
+    <h3>Diskon Hemat 💸</h3>
+    <p>Dapatkan potongan <strong>10%</strong> untuk semua layanan. 
+      Gunakan kode <strong>CLEAN10</strong> pada checkout.</p>
   </div>
 </div>
 
@@ -378,25 +543,15 @@
       <p>Periksa alamat dan rincian sebelum pesan</p>
     </header>
 
+<!-- Frame Alamat (klik untuk edit) -->
+<div class="order-panel" onclick="gotoOrderAddress()" style="cursor:pointer;">
+  <label><strong>Alamat Pengambilan / Pengiriman</strong></label>
+  <div id="shortAddress" style="margin-top:6px;font-size:14px;color:#333;">
+    (Belum ada alamat, klik untuk atur)
+  </div>
+</div>
+
     <div class="order-panel">
-      <label><strong>Alamat Pengambilan / Pengiriman</strong></label>
-      <div style="height:8px"></div>
-      <div class="address-row">
-        <input id="orderAddress" class="address-input" type="text" placeholder="Ketik alamat atau gunakan peta" />
-        <button class="small-btn" onclick="useLocation()">Lokasi</button>
-      </div>
-      <div style="height:8px"></div>
-      <button class="small-btn" style="width:100%;margin-bottom:8px" onclick="openMapForAddress()">Buka Peta</button>
-
-      <!-- orderMap akan muncul di sini setelah pengguna klik Buka Peta -->
-      <div id="orderMap"></div>
-
-      <!-- ALAMAT (readonly) - DITEMPATKAN DI BAWAH MAPS; akan muncul ketika tombol 'Lokasi' diklik -->
-      <div id="fromAddressContainer" style="display:none;margin-top:8px;">
-        <label><strong>Alamat</strong></label>
-        <div id="fromAddress" class="from-address-text" aria-readonly="true" role="status"></div>
-      </div>
-
       <div style="height:12px"></div>
       <div><strong>Rincian Pesanan</strong></div>
       <div class="order-items" id="orderItems"></div>
@@ -406,10 +561,10 @@
         <label><strong>Ongkos Kirim</strong></label>
         <div style="height:6px"></div>
         <div>
-          <label><input type="radio" name="ship" value="5000" checked onchange="recalcTotal()" /> Standard (Rp5.000)</label>
+          <label><input type="radio" name="ship" value="8000" checked onchange="recalcTotal()" /> Standard (Rp8.000)</label>
         </div>
         <div>
-          <label><input type="radio" name="ship" value="10000" onchange="recalcTotal()" /> Express (Rp10.000)</label>
+          <label><input type="radio" name="ship" value="12000" onchange="recalcTotal()" /> Express (Rp12.000)</label>
         </div>
       </div>
 
@@ -426,6 +581,7 @@
           <option value="">Pilih metode pembayaran</option>
           <option value="Q-RIS">Q-RIS</option>
           <option value="COD">Bayar di Tempat (COD)</option>
+          <option value="COD">Pocket Up</option>
         </select>
       </div>
 
@@ -572,14 +728,18 @@
 
   <div style="background:#fff;color:#000;padding:12px;border-radius:12px;margin-bottom:12px;box-shadow:0 2px 4px rgba(0,0,0,0.1);">
     <div style="font-weight:600;margin-bottom:6px;font-size:14px;">Akun Saya</div>
-    <button style="display:block;width:100%;padding:9px;margin-bottom:6px;border:1px solid #ddd;border-radius:8px;background:#f9f9f9;text-align:left;font-size:13px;">
-      🎟 Point Up
+    <button onclick="gotoPointUp()" 
+    style="display:block;width:100%;padding:9px;margin-bottom:6px;border:1px solid #ddd;
+         border-radius:8px;background:#f9f9f9;text-align:left;font-size:13px;">
+    🎟 Point Up
     </button>
-    <button style="display:block;width:100%;padding:9px;margin-bottom:6px;border:1px solid #ddd;border-radius:8px;background:#f9f9f9;text-align:left;font-size:13px;">
-      💰 Pocket Up
+    <button onclick="gotoPocketUp()" 
+    style="display:block;width:100%;padding:9px;margin-bottom:6px;border:1px solid #ddd;border-radius:8px;background:#f9f9f9;text-align:left;font-size:13px;">
+    💰 Pocket Up
     </button>
-    <button style="display:block;width:100%;padding:9px;margin-bottom:6px;border:1px solid #ddd;border-radius:8px;background:#f9f9f9;text-align:left;font-size:13px;">
-      📍 Alamat Tersimpan
+    <button onclick="gotoAlamat()" 
+    style="display:block;width:100%;padding:9px;margin-bottom:6px;border:1px solid #ddd;border-radius:8px;background:#f9f9f9;text-align:left;font-size:13px;">
+    📍 Alamat Tersimpan
     </button>
     <button style="display:block;width:100%;padding:9px;margin-bottom:6px;border:1px solid #ddd;border-radius:8px;background:#f9f9f9;text-align:left;font-size:13px;">
       🔒 Ganti Password
@@ -592,6 +752,7 @@
     </button>
   </div>
 </div>
+
 <!-- HALAMAN: Login/Sign In -->
 <!-- HALAMAN: Login/Sign In -->
 <div id="loginPage" class="page" style="background:inherit; color:#fff; text-align:center;">
@@ -639,6 +800,135 @@
   </div>
 </div>
 
+<!-- HALAMAN: Point Up -->
+<div id="pointUpPage" class="page">
+  <h2 style="text-align:center;">Koin Saya</h2>
+
+  <!-- SALDO -->
+  <div style="background:linear-gradient(180deg,#ffb300,#ff8c00);color:#fff;padding:16px;border-radius:12px;margin-bottom:12px;">
+    <div style="font-size:28px;font-weight:bold;" id="pointSaldo">0</div>
+    <div style="font-size:13px;">Koin kedaluwarsa pada 31-12-2025</div>
+  </div>
+
+  <!-- CHECK-IN -->
+  <div style="background:#fff;color:#000;padding:10px;border-radius:10px;margin-bottom:10px;box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+    <div style="font-weight:500;margin-bottom:10px;">Check-in Harian</div>
+    <div style="display:flex;justify-content:space-between;gap:3px;margin-bottom:10px;">
+      <div style="flex:1;text-align:center;background:#fdf4d7;padding:4px;border-radius:4px;font-size:12px;">Day 1<br><b>+3</b></div>
+      <div style="flex:1;text-align:center;background:#fdf4d7;padding:4px;border-radius:4px;font-size:12px;">Day 2<br><b>+3</b></div>
+      <div style="flex:1;text-align:center;background:#fdf4d7;padding:4px;border-radius:4px;font-size:12px;">Day 3<br><b>+3</b></div>
+      <div style="flex:1;text-align:center;background:#fdf4d7;padding:4px;border-radius:4px;font-size:12px;">Day 4<br><b>+3</b></div>
+      <div style="flex:1;text-align:center;background:#fdf4d7;padding:4px;border-radius:4px;font-size:12px;">Day 5<br><b>+3</b></div>
+      <div style="flex:1;text-align:center;background:#fdf4d7;padding:4px;border-radius:4px;font-size:12px;">Day 6<br><b>+3</b></div>
+      <div style="flex:1;text-align:center;background:#fdf4d7;padding:4px;border-radius:4px;font-size:12px;">Day 7<br><b>+10</b></div>
+    </div>
+    <button onclick="claimDailyCoin()" style="width:100%;padding:10px;background:#ff8c00;color:#fff;border:0;border-radius:8px;cursor:pointer;">Cek-in untuk dapat coin</button>
+  </div>
+
+  <!-- RIWAYAT POINT -->
+  <div style="background:#fff;color:#000;padding:14px;border-radius:12px;box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+    <div style="font-weight:600;margin-bottom:8px;">Riwayat Point Up</div>
+    <ul id="riwayatPointUp" style="list-style:none;padding:0;margin:0;max-height:180px;overflow-y:auto;"></ul>
+  </div>
+</div>
+
+<!-- HALAMAN: Pocket Up -->
+<div id="pocketUpPage" class="page">
+  <h2 style="text-align:center;">Dompet Saya</h2>
+
+  <!-- SALDO -->
+<div class="saldo-box">
+  <div style="font-size:28px;font-weight:bold;" id="pocketSaldo">0</div>
+  <div style="font-size:13px;">Saldo Pocket Up Anda</div>
+</div>
+
+  <!-- CARD SALDO -->
+  <div class="card">
+    <div class="pocket-menu">
+      <div class="menu-item">
+        <div class="icon">📷</div>
+        <span>Scan QR</span>
+      </div>
+      <div class="menu-item">
+        <div class="icon">➕</div>
+        <span>Isi Saldo</span>
+      </div>
+      <div class="menu-item">
+        <div class="icon">🔄</div>
+        <span>Transfer</span>
+      </div>
+      <div class="menu-item">
+        <div class="icon">💸</div>
+        <span>Tarik Tunai</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="orderAddressPage" class="page">
+  <header>
+    <h1>Atur Alamat</h1>
+    <p>Pengambilan / Pengiriman</p>
+  </header>
+
+  <div class="order-panel">
+    <div class="address-row">
+      <input id="orderAddress" class="address-input" type="text" placeholder="Ketik alamat atau gunakan peta" />
+      <button class="small-btn" onclick="backToOrder()">Pilih</button>
+    </div>
+    <button class="small-btn" style="width:100%;margin:8px 0" onclick="openMapForAddress()">Buka Peta</button>
+    <button class="small-btn" style="width:100%;margin-bottom:8px" onclick="openSavedAlamatPopup()">Alamat Tersimpan</button>
+
+    <div id="orderMap" style="height:240px;margin-top:8px;display:none;"></div>
+    <div id="fromAddressContainer" style="display:none;margin-top:8px;">
+      <label><strong>Alamat</strong></label>
+      <div id="fromAddress" class="from-address-text"></div>
+    </div>
+
+<div id="savedAlamatPopup"
+     style="display:none;position:absolute;z-index:9999;
+            background:#fff;border:1px solid #ddd;border-radius:10px;
+            padding:10px;box-shadow:0 4px 10px rgba(0,0,0,0.2);width:90%;max-width:290px;">
+  <div style="font-weight:600;margin-bottom:8px;">Alamat Tersimpan</div>
+  <ul id="popupAlamatList" style="list-style:none;padding:0;margin:0;max-height:200px;overflow-y:auto;"></ul>
+</div>
+  </div>
+</div>
+
+
+<!-- HALAMAN: Alamat Tersimpan -->
+<div id="alamatPage" class="page">
+  <header>
+    <h1>Alamat Tersimpan</h1>
+    <p>Kelola dan pilih alamat favorit Anda</p>
+  </header>
+
+  <!-- Frame Tambah/Simpan Alamat -->
+  <div class="order-panel">
+    <!-- Input cari alamat (disembunyikan, muncul hanya saat map tampil) -->
+    <div id="alamatSearchBox" style="display:none;position:relative;margin-bottom:10px;">
+      <input id="alamatSearch" type="text" placeholder="Cari alamat atau tempat..."
+             style="width:100%;padding:10px 12px;padding-left:34px;
+             border-radius:10px;border:1px solid #ccc;font-size:14px;box-sizing:border-box;" />
+      <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#888;">🔍</span>
+    </div>
+
+    <!-- Map (disembunyikan awalnya) -->
+    <div id="alamatMap" style="height:240px;margin-bottom:12px;
+         border-radius:12px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,0.15);display:none"></div>
+
+    <!-- Tombol tambah/simpan -->
+    <button id="btnAddAlamat" class="small-btn" style="width:100%;font-size:14px;
+      font-weight:600;padding:12px;border-radius:10px;transition:0.3s;"
+      onclick="toggleTambahAlamat()">Tambah Alamat</button>
+  </div>
+
+  <!-- Frame Daftar Alamat -->
+  <div class="order-panel" style="margin-top:14px;">
+    <strong style="display:block;margin-bottom:8px;font-size:15px;">Alamat Tersimpan</strong>
+    <ul id="savedAlamatUl" style="list-style:none;padding:0;margin:0;"></ul>
+  </div>
+</div>
 
 
   <!-- Chat Page -->
@@ -780,7 +1070,7 @@ function openPage(pageId){
   // tampilkan/sembunyikan footer sesuai halaman
   const footer = document.getElementById('footerNav');
   if (footer) {
-    if (['home','promoPage','riwayatPage','profilePage'].includes(pageId)) {
+    if (['home','promoPage','historyPage','profilePage','pointUpPage'].includes(pageId)) {
       footer.style.display = "flex";
     } else {
       footer.style.display = "none";
@@ -790,10 +1080,8 @@ function openPage(pageId){
   // update footer active state
   try {
     document.querySelectorAll('.footer-btn').forEach(b=>b.classList.remove('active'));
-    if (pageId === 'home') {
-      const hb = document.querySelector('.footer-btn[data-key="home"]');
-      if(hb) hb.classList.add('active');
-    }
+    const btn = document.querySelector(`.footer-btn[data-key="${pageId.replace('Page','')}"]`);
+    if (btn) btn.classList.add('active');
   } catch(e){}
 
   // scroll ke atas kalau buka home
@@ -806,10 +1094,11 @@ function openPage(pageId){
 
   // popup harus hilang jika bukan di daftar harga
   const popup = document.getElementById('cartPopup');
-  if (popup && !['promoPage','hargaPage'].includes(pageId)) {
+  if (popup && pageId !== 'priceListPage') {
     popup.style.display = "none";
   }
 }
+
 
 // Fungsi buka popup cart
 function openCartPopup(){
@@ -845,7 +1134,7 @@ window.onpopstate = function(event) {
     // tampilkan/sembunyikan footer
     const footer = document.getElementById('footerNav');
     if (footer) {
-      if (['home','promoPage','riwayatPage','profilePage'].includes(event.state.page)) {
+      if (['home','promoPage','historyPage','profilePage','pointUpPage'].includes(event.state.page)) {
         footer.style.display = "flex";
       } else {
         footer.style.display = "none";
@@ -944,8 +1233,6 @@ function renderHistory(){
   document.getElementById('profilePage').style.display = 'block';
 }
 
-
-
     function openPriceList(storeName){
       currentStore = storeName;
       openPage('priceListPage');
@@ -1041,6 +1328,40 @@ function gotoHistory(){
 function gotoProfile(){
   hideOverlayPages();
   document.getElementById('profilePage').style.display = 'block';
+}
+
+function gotoPointUp(){
+  hideOverlayPages();                 // sembunyikan profile & history dulu
+  openPage('pointUpPage');            // baru buka halaman pointUp
+  updatePointSaldo();                 // refresh saldo
+}
+
+function getPointKey(){
+  const user = JSON.parse(localStorage.getItem('cleanUpUser') || 'null');
+  return user ? `pointUp_${user.email}` : 'pointUp_guest';
+}
+
+function gotoPocketUp(){
+  hideOverlayPages();          // sembunyikan profile & history dulu
+  openPage('pocketUpPage');    // buka halaman pocketUp
+  updatePocketSaldo();         // refresh saldo (fungsi ini kita buat)
+}
+
+function gotoAlamat(){
+  hideOverlayPages();          // sembunyikan profile & history dulu
+  openPage('alamatPage');      // buka halaman Alamat Tersimpan
+  renderSavedAlamat();         // refresh daftar alamat tersimpan
+}
+
+function gotoOrderAddress(){
+  hideOverlayPages();
+  openPage('orderAddressPage');
+}
+
+function backToOrder(){
+  const addr = document.getElementById('orderAddress').value || '(Belum ada alamat)';
+  document.getElementById('shortAddress').textContent = addr;
+  openPage('orderPage');
 }
 
 function setActiveFooter(key) {
@@ -1159,8 +1480,8 @@ function setActiveFooter(key) {
 
       // set subtotal
       document.getElementById('orderSubtotal').innerText = formatRp(getSubtotal());
-      // default shipping 5000
-      document.getElementById('orderShipping').innerText = formatRp(5000);
+      // default shipping 8000
+      document.getElementById('orderShipping').innerText = formatRp(8000);
       document.getElementById('orderDiscount').innerText = '-Rp0';
       recalcTotal();
       // hide cart popup
@@ -1169,7 +1490,7 @@ function setActiveFooter(key) {
 
     function recalcTotal(){
       const subtotal = getSubtotal();
-      const ship = Number(document.querySelector('input[name="ship"]:checked')?.value || 5000);
+      const ship = Number(document.querySelector('input[name="ship"]:checked')?.value || 8000);
       const discount = promoApplied.value || 0;
       const total = Math.max(0, subtotal + ship - discount);
       document.getElementById('orderSubtotal').innerText = formatRp(subtotal);
@@ -1183,7 +1504,7 @@ function setActiveFooter(key) {
       const subtotal = getSubtotal();
       if(!code){ document.getElementById('promoMsg').textContent = 'Masukkan kode promo.'; document.getElementById('promoMsg').style.color='red'; return; }
       // simple demo promo rules
-      if(code === 'CLEAN5'){
+      if(code === 'CLEAN25'){
         promoApplied = {code, value:5000};
         document.getElementById('promoMsg').textContent = 'Promo terpakai: Potongan Rp5.000';
         document.getElementById('promoMsg').style.color='green';
@@ -1208,7 +1529,7 @@ function setActiveFooter(key) {
       if(!payment){ alert('Pilih metode pembayaran terlebih dahulu.'); return; }
 
       const subtotal = getSubtotal();
-      const ship = Number(document.querySelector('input[name="ship"]:checked')?.value || 5000);
+      const ship = Number(document.querySelector('input[name="ship"]:checked')?.value || 8000);
       const discount = promoApplied.value || 0;
       const total = Math.max(0, subtotal + ship - discount);
 
@@ -1335,9 +1656,6 @@ function setActiveFooter(key) {
     if(pmEl) pmEl.addEventListener('change', updatePesanButtonState);
     updatePesanButtonState();
 
-    // initial
-    openPage('home');
-
 // Intro Page: tampil 5 detik lalu masuk ke Home
 document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
 document.getElementById('introPage').classList.add('active');
@@ -1397,6 +1715,188 @@ document.getElementById('signInForm').onsubmit = function(e){
     alert("Nama atau password salah!");
   }
 };
+function updatePointSaldo(){
+  let data = JSON.parse(localStorage.getItem('pointUp') || '{"balance":0,"history":[],"lastLogin":""}');
+  document.getElementById('pointSaldo').innerText = data.balance;
+  const list = document.getElementById('riwayatPointUp');
+  if(list){
+    list.innerHTML = data.history.map(h=>`<li style="padding:4px 0;border-bottom:1px solid #eee;">${h}</li>`).join('');
+  }
+}
+
+function claimDailyCoin(){
+  let data = JSON.parse(localStorage.getItem('pointUp') || '{"balance":0,"history":[],"lastLogin":""}');
+  let today = new Date().toLocaleDateString('id-ID');
+  if(data.lastLogin === today){
+    alert("Kamu sudah cek-in hari ini!");
+    return;
+  }
+  data.balance += 3;
+  data.lastLogin = today;
+  data.history.unshift(`+3 coin (Check-in Harian) - ${today}`);
+  localStorage.setItem('pointUp', JSON.stringify(data));
+  updatePointSaldo();
+}
+
+function addCoinFromTransaction(total){
+  let data = JSON.parse(localStorage.getItem('pointUp') || '{"balance":0,"history":[],"lastLogin":""}');
+  let bonus = Math.floor(total * 0.0005); // 0,05%
+  if(bonus > 0){
+    data.balance += bonus;
+    data.history.unshift(`+${bonus} coin (Bonus Transaksi Rp${total.toLocaleString('id-ID')})`);
+    localStorage.setItem('pointUp', JSON.stringify(data));
+    updatePointSaldo();
+  }
+}
+
+window.addEventListener('load', ()=>updatePointSaldo());
+
+function updatePocketSaldo(){
+  // ambil saldo dari localStorage (atau API kalau ada)
+  const saldo = Number(localStorage.getItem('pocketSaldo') || 0);
+
+  // isi ke elemen di halaman Pocket Up
+  const saldoEl = document.getElementById('pocketSaldo');
+  const saldoDetailEl = document.getElementById('pocketSaldoDetail');
+  if(saldoEl) saldoEl.innerText = 'Rp' + saldo.toLocaleString('id-ID');
+  if(saldoDetailEl) saldoDetailEl.innerText = 'Rp' + saldo.toLocaleString('id-ID');
+}
+
+let alamatMap, alamatMarker;
+
+function toggleTambahAlamat(){
+  const btn = document.getElementById('btnAddAlamat');
+  const mapDiv = document.getElementById('alamatMap');
+  const searchBox = document.getElementById('alamatSearchBox');
+
+  if(mapDiv.style.display === 'none'){ 
+    // buka map + search
+    mapDiv.style.display = 'block';
+    searchBox.style.display = 'block';   // ⬅️ WAJIB supaya search tampil
+    btn.textContent = 'Simpan Alamat';
+    btn.style.background = '#28a745';
+    btn.style.color = '#fff';
+    if(!alamatMap){
+      alamatMap = L.map('alamatMap').setView([-6.914744,107.60981], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom:19, attribution:'© OpenStreetMap'
+      }).addTo(alamatMap);
+    }
+    setTimeout(()=>{alamatMap.invalidateSize()},200);
+
+  } else {
+    // simpan alamat
+    mapDiv.style.display = 'none';
+    searchBox.style.display = 'none';  // ⬅️ disembunyikan lagi setelah simpan
+    btn.textContent = 'Tambah Alamat';
+    btn.style.background = '';
+    btn.style.color = '';
+    const addr = btn.dataset.selectedAlamat;
+    if(!addr){ alert('Klik lokasi di peta dahulu.'); return; }
+    let arr = JSON.parse(localStorage.getItem('savedAlamat')||'[]');
+    arr.push(addr);
+    localStorage.setItem('savedAlamat', JSON.stringify(arr));
+    renderSavedAlamat();
+    mapDiv.style.display = 'none';
+    btn.textContent = 'Tambah Alamat';
+    delete btn.dataset.selectedAlamat;
+  }
+}
+
+if(!alamatMap){
+  alamatMap = L.map('alamatMap').setView([-6.914744,107.60981], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom:19, attribution:'© OpenStreetMap'
+  }).addTo(alamatMap);
+
+  // ✅ klik di peta untuk taruh marker
+  alamatMap.on('click', e=>{
+    if(alamatMarker) alamatMap.removeLayer(alamatMarker);
+    alamatMarker = L.marker(e.latlng).addTo(alamatMap);
+    reverseGeocodeAlamat(e.latlng.lat, e.latlng.lng, (addr)=>{
+      alamatMarker.bindPopup(addr).openPopup();
+      document.getElementById('btnAddAlamat').dataset.selectedAlamat = addr;
+    });
+  });
+}
+
+function reverseGeocodeAlamat(lat, lon, cb){
+  fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&accept-language=id`)
+    .then(r=>r.json()).then(d=>{
+      cb(d.display_name || `${lat},${lon}`);
+    }).catch(()=>cb(`${lat},${lon}`));
+}
+
+function renderSavedAlamat(){
+  const ul = document.getElementById('savedAlamatUl');
+  if(!ul) return;
+  let arr = JSON.parse(localStorage.getItem('savedAlamat') || '[]');
+  
+  ul.innerHTML = arr.length 
+    ? arr.map(a=>`<li style="padding:8px 0;border-bottom:1px solid #eee;font-size:13px;">📍 ${a}</li>`).join('')
+    : '<li style="color:#666;font-size:13px;">Belum ada alamat tersimpan</li>';
+}
+document.addEventListener('DOMContentLoaded', ()=>{
+  renderSavedAlamat();
+});
+
+
+// Popup di orderPage
+function openSavedAlamatPopup(){
+  const popup = document.getElementById('savedAlamatPopup');
+  const ul = document.getElementById('popupAlamatList');
+  let arr = JSON.parse(localStorage.getItem('savedAlamat')||'[]');
+  ul.innerHTML = arr.length ? arr.map(a=>`<li class="cart-item">
+      <div>${a}</div>
+      <button onclick="pilihAlamat('${a.replace(/'/g,"&#39;")}')">+</button>
+    </li>`).join('')
+    : '<li style="padding:6px">Belum ada alamat</li>';
+  popup.style.display = 'block';
+}
+function closeSavedAlamatPopup(){
+  document.getElementById('savedAlamatPopup').style.display='none';
+}
+function pilihAlamat(addr){
+  document.getElementById('orderAddress').value = addr;
+  closeSavedAlamatPopup();
+}
+
+// Pencarian alamat dengan Nominatim
+document.addEventListener('DOMContentLoaded', ()=>{
+  const searchInput = document.getElementById('alamatSearch');
+  if(searchInput){
+    searchInput.addEventListener('keypress', function(e){
+      if(e.key === 'Enter'){
+        const q = this.value.trim();
+        if(!q) return;
+
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=id&addressdetails=1&limit=5&accept-language=id`)
+          .then(r=>r.json())
+          .then(data=>{
+            if(data && data.length){
+              const lat = parseFloat(data[0].lat);
+              const lon = parseFloat(data[0].lon);
+
+              if(alamatMap){
+                alamatMap.setView([lat,lon], 15);
+
+                if(alamatMarker) alamatMap.removeLayer(alamatMarker);
+                alamatMarker = L.marker([lat,lon]).addTo(alamatMap)
+                  .bindPopup(data[0].display_name).openPopup();
+
+                // simpan hasil alamat di tombol simpan
+                document.getElementById('btnAddAlamat').dataset.selectedAlamat = data[0].display_name;
+              }
+            } else {
+              alert('Alamat tidak ditemukan.');
+            }
+          })
+          .catch(err=>console.error(err));
+      }
+    });
+  }
+});
+
 
   </script>
 </body>
