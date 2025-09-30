@@ -1426,7 +1426,8 @@ function getPointKey(){
 }
 
 function getPointSaldo(){
-  return parseInt(localStorage.getItem("pointSaldo") || "0");
+  const key = getPointKey();
+  return parseInt(localStorage.getItem(key) || "0");
 }
 
 
@@ -1556,36 +1557,17 @@ function setActiveFooter(key) {
 
     }
 
-function recalcTotal(){
-  const subtotal = getSubtotal();
-  const ship = parseInt(document.querySelector('input[name="ship"]:checked')?.value || 0);
-  let discount = promoApplied.value || 0;
-  let pointDiscount = 0;
+    function recalcTotal(){
+      const subtotal = getSubtotal();
+      const ship = Number(document.querySelector('input[name="ship"]:checked')?.value || 8000);
 
-  if(usePoint){
-    const saldo = getPointSaldo(); // langsung dari pointSaldo
-    pointDiscount = Math.min(saldo, subtotal + ship - discount);
-    window.pointUsed = pointDiscount;
-  } else {
-    window.pointUsed = 0;
-  }
-
-  document.getElementById('orderSubtotal').innerText = formatRp(subtotal);
-  document.getElementById('orderShipping').innerText = formatRp(ship);
-  document.getElementById('orderDiscount').innerText = "-"+formatRp(discount);
-
-  // baris Point Up
-  const pointRow = document.getElementById('orderPointUpRow');
-  if(window.pointUsed > 0){
-    pointRow.style.display = "flex";
-    document.getElementById('orderPointUp').innerText = "-"+formatRp(window.pointUsed);
-  } else {
-    pointRow.style.display = "none";
-  }
-
-  document.getElementById('orderTotal').innerText = formatRp(subtotal + ship - discount - window.pointUsed);
-}
-
+      const discount = promoApplied.value || 0;
+      const total = Math.max(0, subtotal + ship - discount);
+      document.getElementById('orderSubtotal').innerText = formatRp(subtotal);
+      document.getElementById('orderShipping').innerText = formatRp(ship);
+      document.getElementById('orderDiscount').innerText = '-'+formatRp(discount);
+      document.getElementById('orderTotal').innerText = formatRp(total);
+    }
 
     function applyPromo(){
       const code = (document.getElementById('promoCode').value || '').trim().toUpperCase();
@@ -1622,12 +1604,7 @@ function recalcTotal(){
       const ship = Number(document.querySelector('input[name="ship"]:checked')?.value || 8000);
       const discount = promoApplied.value || 0;
       const total = Math.max(0, subtotal + ship - discount);
-if(window.pointUsed > 0){
-  let saldo = getPointSaldo();
-  saldo -= window.pointUsed;
-  if(saldo < 0) saldo = 0;
-  localStorage.setItem("pointSaldo", saldo);
-}
+
       // determine laundry name (prefer cart store if available)
       let laundryName = currentStore || (cart.length ? cart[0].store : 'Laundry');
 
@@ -1996,6 +1973,3 @@ document.addEventListener('DOMContentLoaded', ()=>{
   </script>
 </body>
 </html>
-
-
-
