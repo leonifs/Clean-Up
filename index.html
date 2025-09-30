@@ -123,6 +123,40 @@
       font-size:14px !important;
     }
 
+/* Toggle switch untuk Point Up */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 42px;
+  height: 22px;
+}
+.switch input { display: none; }
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 22px;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+input:checked + .slider {
+  background-color: #0b2d82; /* biru ketika aktif */
+}
+input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
       /* payment row */
     .payment-row{margin-top:8px}
     #paymentMethod{width:100%;padding:8px;border-radius:8px;border:1px solid #ddd}
@@ -573,6 +607,20 @@
         <button class="small-btn" onclick="applyPromo()">Gunakan</button>
       </div>
       <div id="promoMsg" style="font-size:13px;color:green;margin-top:6px"></div>
+
+<!-- Tukarkan Point Up -->
+<div class="pointup-row" style="margin-top:8px;display:flex;align-items:center;justify-content:space-between;">
+  <label style="font-weight:600;font-size:13px;display:flex;align-items:center;gap:6px;">
+    <span style="font-size:16px;">🎟</span> Tukarkan Point Up
+  </label>
+  <label class="switch" style="position:relative;display:inline-block;width:42px;height:22px;">
+    <input type="checkbox" id="usePointUp" onchange="togglePointUp()" style="opacity:0;width:0;height:0;">
+   <span class="slider"></span>
+    </label>
+</div>
+<div id="pointUpMsg" style="font-size:12px;color:green;margin-top:4px;display:none;">
+  Point Up digunakan
+</div>
 
       <div class="payment-row">
         <label><strong>Metode Pembayaran</strong></label>
@@ -1364,6 +1412,24 @@ function backToOrder(){
   openPage('orderPage');
 }
 
+function togglePointUp(){
+  const cb = document.getElementById('usePointUp');
+  usePoint = cb && cb.checked;
+  document.getElementById('pointUpMsg').style.display = usePoint ? 'block' : 'none';
+  recalcTotal();
+}
+
+function getPointKey(){
+  // kalau ada sistem login, gunakan username unik
+  let user = localStorage.getItem("activeUser") || "guest";
+  return "point_" + user;
+}
+
+function getPointSaldo(){
+  return parseInt(localStorage.getItem("pointSaldo") || "0");
+}
+
+
 function setActiveFooter(key) {
       document.querySelectorAll('#footerNav .footer-btn').forEach(btn => {
         btn.classList.remove('active');
@@ -1486,18 +1552,40 @@ function setActiveFooter(key) {
       recalcTotal();
       // hide cart popup
       document.getElementById('cartPopup').style.display = 'none';
+      let usePoint = false;  // status apakah Point Up dipakai
+
     }
 
-    function recalcTotal(){
-      const subtotal = getSubtotal();
-      const ship = Number(document.querySelector('input[name="ship"]:checked')?.value || 8000);
-      const discount = promoApplied.value || 0;
-      const total = Math.max(0, subtotal + ship - discount);
-      document.getElementById('orderSubtotal').innerText = formatRp(subtotal);
-      document.getElementById('orderShipping').innerText = formatRp(ship);
-      document.getElementById('orderDiscount').innerText = '-'+formatRp(discount);
-      document.getElementById('orderTotal').innerText = formatRp(total);
-    }
+function recalcTotal(){
+  const subtotal = getSubtotal();
+  const ship = parseInt(document.querySelector('input[name="ship"]:checked')?.value || 0);
+  let discount = promoApplied.value || 0;
+  let pointDiscount = 0;
+
+  if(usePoint){
+    const saldo = getPointSaldo(); // langsung dari pointSaldo
+    pointDiscount = Math.min(saldo, subtotal + ship - discount);
+    window.pointUsed = pointDiscount;
+  } else {
+    window.pointUsed = 0;
+  }
+
+  document.getElementById('orderSubtotal').innerText = formatRp(subtotal);
+  document.getElementById('orderShipping').innerText = formatRp(ship);
+  document.getElementById('orderDiscount').innerText = "-"+formatRp(discount);
+
+  // baris Point Up
+  const pointRow = document.getElementById('orderPointUpRow');
+  if(window.pointUsed > 0){
+    pointRow.style.display = "flex";
+    document.getElementById('orderPointUp').innerText = "-"+formatRp(window.pointUsed);
+  } else {
+    pointRow.style.display = "none";
+  }
+
+  document.getElementById('orderTotal').innerText = formatRp(subtotal + ship - discount - window.pointUsed);
+}
+
 
     function applyPromo(){
       const code = (document.getElementById('promoCode').value || '').trim().toUpperCase();
@@ -1521,6 +1609,8 @@ function setActiveFooter(key) {
       recalcTotal();
     }
 
+
+
     function placeOrder(){
       const addr = (document.getElementById('orderAddress').value || '').trim();
       if(!addr){ alert('Isi alamat pengambilan/pengiriman terlebih dahulu.'); return; }
@@ -1532,7 +1622,12 @@ function setActiveFooter(key) {
       const ship = Number(document.querySelector('input[name="ship"]:checked')?.value || 8000);
       const discount = promoApplied.value || 0;
       const total = Math.max(0, subtotal + ship - discount);
-
+if(window.pointUsed > 0){
+  let saldo = getPointSaldo();
+  saldo -= window.pointUsed;
+  if(saldo < 0) saldo = 0;
+  localStorage.setItem("pointSaldo", saldo);
+}
       // determine laundry name (prefer cart store if available)
       let laundryName = currentStore || (cart.length ? cart[0].store : 'Laundry');
 
