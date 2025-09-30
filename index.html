@@ -1118,7 +1118,7 @@ function openPage(pageId){
   // tampilkan/sembunyikan footer sesuai halaman
   const footer = document.getElementById('footerNav');
   if (footer) {
-    if (['home','promoPage','historyPage','profilePage','pointUpPage'].includes(pageId)) {
+    if (['home','promoPage','historyPage','profilePage'].includes(pageId)) {
       footer.style.display = "flex";
     } else {
       footer.style.display = "none";
@@ -1973,3 +1973,4 @@ document.addEventListener('DOMContentLoaded', ()=>{
   </script>
 </body>
 </html>
+
